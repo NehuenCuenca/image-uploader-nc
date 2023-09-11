@@ -87,7 +87,7 @@ export default {
       const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`
 
       const formData = new FormData();
-      formData.append('upload_preasdadadset', `${preset}`)
+      formData.append('upload_preset', `${preset}`)
       formData.append('file', newImage.value);
 
       try {
@@ -243,8 +243,6 @@ main {
   border-radius: 8px;
   background-color: #2F80ED;
 }
-
-.icon {}
 
 .original-img {
   border-radius: 12px;
