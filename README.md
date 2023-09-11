@@ -17,11 +17,11 @@ This template should help get you started developing with Vue 3 in Vite. The tem
 
 <div align="center">
   <h3>
-    <a href="https://{your-demo-link.your-domain}">
+    <a href="https://image-uploader-nc.netlify.app/">
       Demo
     </a>
     <span> | </span>
-    <a href="https://{your-url-to-the-solution}">
+    <a href="https://devchallenges.io/solutions/ZPLIqLgYkDaRtDUw2er4">
       Solution
     </a>
     <span> | </span>
