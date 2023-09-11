@@ -1,42 +1,160 @@
 <template>
   <main>
-    <div class="card">
+    <div class="card" v-if="!isUploadingImage && !imageHasBeenSent">
       <span class="title">Upload your image</span>
       <span class="subtitle">File should be Jpeg, Png,...</span>
-      <div class="draggable-zone">
-        <img src="./assets/placeholder-img.webp" alt="placeholder image" class="placeholder-img">
+      <div class="draggable-zone" @dragover.prevent @drop="onDrop">
+        <img src="./assets/placeholder-img.webp" alt="placeholder image" class="placeholder-img" v-if="!newImage">
+        <img :src="newImage" alt="real image" class="placeholder-img" v-else>
         <span class="info-img">Drag & Drop your image here</span>
       </div>
       <span class="placeholder-text">Or</span>
-      <button type="button" class="upload">Choose a file</button>
+      <div class="upload-file">
+        <input type="file" accept="image/*" ref="fileInput" id="files" class="hidden" @change="onChange" />
+        <label for="files">Choose a file</label>
+      </div>
     </div>
 
-    <!-- <div class="card loading">
+    <div class="card loading" v-if="isUploadingImage && imageHasBeenSent">
       <span class="title">Uploading...</span>
       <div class="progess-bar">
         <div class="progress"></div>
       </div>
-    </div> -->
+    </div>
 
-    <!-- <div class="card">
-      <i class="icon">✅</i>
-      <span class="title">Uploaded Successfully!</span>
-      <img src="" alt="" class="original-img">
-      <div class="link-img">
-        <input type="text" disabled value="https://images.yourdomain.com/photo-1496950866446-325...">
-        <button type="button" class="copy-clipboard">Copy Link</button>
+    <template v-if="!isUploadingImage && imageHasBeenSent">
+      <div class="card" v-if="imageHasBeenUpload">
+        <i class="icon">✅</i>
+        <span class="title">Uploaded Successfully!</span>
+        <img :src="urlNewImage" alt="" class="original-img">
+        <div class="link-img">
+          <input type="text" disabled :value="urlNewImage">
+          <button type="button" class="copy-clipboard" @click="copyToClipboard">Copy Link</button>
+        </div>
       </div>
-    </div> -->
+
+      <div class="card" v-if="!imageHasBeenUpload">
+        <i class="icon">❌</i>
+        <span class="title">Uploaded Failed!</span>
+        <p>{{ msgError }}</p>
+        <button class="try-again" @click="retryUpload">Try again!</button>
+      </div>
+    </template>
   </main>
   <footer>created by Nehuen - devChallenges.io</footer>
 </template>
 
 <script>
+import { ref } from 'vue';
 
 export default {
   setup() {
+    // STATE
+    const newImage = ref(null)
+    const urlNewImage = ref('')
+    const msgError = ref('')
+
+    const imageHasBeenSent = ref(false)
+    const isUploadingImage = ref(false)
+    const imageHasBeenUpload = ref(false)
+
+
+    // METHODS 
+    const createFile = (file) => {
+      if (!file.type.match('image.*')) {
+        alert('Select an image');
+        return;
+      }
+
+      let reader = new FileReader();
+
+      reader.addEventListener('load', async function (e) {
+        newImage.value = e.target.result;
+        await uploadImage();
+      })
+
+      reader.readAsDataURL(file);
+    }
+
+    const uploadImage = async () => {
+      imageHasBeenSent.value = true
+      isUploadingImage.value = true
+
+      // https://api.cloudinary.com/v1_1/de9d1foso/image/upload
+      const preset = 'ml_default'
+      const cloud_name = 'de9d1foso'
+
+      const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`
+
+      const formData = new FormData();
+      formData.append('upload_preasdadadset', `${preset}`)
+      formData.append('file', newImage.value);
+
+      try {
+        const res = await fetch(cloudinaryUrl, {
+          method: 'POST',
+          body: formData,
+        });
+
+
+        isUploadingImage.value = false
+        imageHasBeenUpload.value = res.ok
+        console.log(imageHasBeenUpload.value);
+        if (!res.ok) throw new Error(`${res.statusText}`)
+
+        const data = await res.json();
+        urlNewImage.value = data.secure_url
+      } catch (error) {
+        console.error(error);
+        msgError.value = error.message
+        alert(`${error}`)
+      }
+    }
+
+    // https://codepen.io/raffo1234/pen/beQXwe
+    const onDrop = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      console.log('ON DROP');
+
+      var files = e.dataTransfer.files;
+      createFile(files[0]);
+    }
+
+    const onChange = (e) => {
+      console.log('ON CHANGE');
+      const files = e.target.files
+      createFile(files[0]);
+    }
+
+    const copyToClipboard = async () => {
+      await navigator.clipboard.writeText(urlNewImage.value)
+    }
+
+    const retryUpload = () => {
+      newImage.value = null
+      urlNewImage.value = ''
+      msgError.value = ''
+
+      imageHasBeenSent.value = false
+      isUploadingImage.value = false
+      imageHasBeenUpload.value = false
+    }
 
     return {
+      // STATE
+      newImage,
+      urlNewImage,
+      isUploadingImage,
+      imageHasBeenSent,
+      imageHasBeenUpload,
+      msgError,
+
+      // METHODS
+      onDrop,
+      onChange,
+      copyToClipboard,
+      retryUpload
     }
   }
 }
@@ -96,14 +214,14 @@ main {
   color: #BDBDBD;
 }
 
-.card .upload {
+.upload-file label {
+  cursor: pointer;
   border-radius: 8px;
   padding: 7px 10px;
   background-color: #2F80ED;
   font: 500 12px 'Noto Sans', sans-serif;
   color: white;
 }
-
 
 .loading :is(.title) {
   align-self: flex-start;
@@ -132,7 +250,7 @@ main {
   border-radius: 12px;
   width: 50%;
   height: 30vh;
-  background-color: blueviolet;
+  object-fit: contain;
 }
 
 .link-img {
@@ -144,6 +262,7 @@ main {
   justify-content: space-between;
 }
 
+
 .link-img input {
   width: 100%;
   border: none;
@@ -151,7 +270,8 @@ main {
   padding: 5px 5px;
   font: 500 12px 'Poppins', sans-serif;
 }
-button.copy-clipboard {
+
+button:is(.copy-clipboard, .try-again) {
   width: fit-content;
   white-space: nowrap;
   background-color: #2F80ED;
@@ -166,4 +286,5 @@ footer {
   color: #A9A9A9;
   font: 500 14px 'Poppins', sans-serif;
   place-items: center;
-}</style>
+}
+</style>

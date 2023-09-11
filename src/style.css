@@ -1,4 +1,4 @@
-/* https://www.figma.com/file/5X3Ao3gEqZPqqKctP7riDF/weather-app?type=design&node-id=0-1&mode=design&t=OyD99mCUak5rdUUm-0 */
+/* https://www.figma.com/file/NxbZm3CAovYh89dFXe7EOw/Image-Uploader?type=design&node-id=0-1&mode=design&t=2m2GbGqt4REoTmh0-0 */
 
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@500&family=Poppins:wght@500&display=swap');
 
@@ -61,4 +61,7 @@ i { font-style: normal;}
   grid-template-rows: 2fr .1fr;
   justify-items: center;
 }
+
+
+.hidden {display: none;}
 
